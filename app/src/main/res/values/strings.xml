@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Localisation GPS</string>
+    <string name="provider_enabled">Provider %s has been activated</string>
+    <string name="provider_disabled">Provider %s has been deactivated</string>
+    <string name="provider_new_status">Provider %1$s switched to status %2$s</string>
+    <string name="new_location">Updated Position — Lat: %1$s, Lng: %2$s, Alt: %3$s with accuracy of %4$s meters</string>
+    <string name="title_activity_maps">Map Overview</string>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- GeoTracker custom palette -->
+    <color name="nma_primary">#FF0D7377</color>
+    <color name="nma_primaryDark">#FF095255</color>
+    <color name="nma_accent">#FFEF6C4A</color>
+    <color name="nma_background">#FFF4F1EE</color>
+    <color name="nma_cardSurface">#FFFDFCFB</color>
+    <color name="nma_darkText">#FF1E1E1E</color>
+    <color name="nma_subtleText">#FF7A7A7A</color>
+    <color name="nma_statusBar">#FF083D3F</color>
+</resources>

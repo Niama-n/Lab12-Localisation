@@ -1,0 +1,4 @@
+<resources>
+    <!-- Replace the placeholder below with your personal Google Maps API key -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyBCYcSPt_mAdGAJmFLGvYujouhdCK-J_08</string>
+</resources>

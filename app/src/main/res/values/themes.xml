@@ -1,0 +1,12 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Light theme for GeoTracker -->
+    <style name="Base.Theme.GeoTracker" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/nma_primary</item>
+        <item name="colorPrimaryDark">@color/nma_primaryDark</item>
+        <item name="colorAccent">@color/nma_accent</item>
+        <item name="android:statusBarColor">@color/nma_statusBar</item>
+        <item name="android:windowBackground">@color/nma_background</item>
+    </style>
+
+    <style name="Theme.GeoTracker" parent="Base.Theme.GeoTracker" />
+</resources>
