@@ -1,4 +1,4 @@
-# 📍 Localisation GPS
+# 📍 LAB 12 : Localisation temps réel via GPS et Google Maps
 
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
@@ -131,3 +131,6 @@ L'application demande de manière transparente les permissions suivantes lors du
 - [ ] Ajouter une ligne (Polyline) sur la carte pour relier les points chronologiquement et dessiner le trajet complet.
 - [ ] Mettre en place un système de "Foreground Service" avec une notification persistante pour continuer à traquer la position même quand l'application est en arrière-plan.
 - [ ] Permettre à l'utilisateur de purger l'historique directement depuis l'application via un bouton "Supprimer mes traces".
+
+## Realise par 
+NAFTAOUI NIAMA
