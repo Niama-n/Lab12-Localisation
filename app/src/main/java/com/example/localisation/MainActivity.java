@@ -27,11 +27,12 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
     private static final int NMA_LOCATION_PERMISSION_CODE = 200;
-    private static final long NMA_MIN_INTERVAL_MS = 60_000;
-    private static final float NMA_MIN_DISTANCE_M = 150f;
+    private static final long NMA_MIN_INTERVAL_MS = 1_000;
+    private static final float NMA_MIN_DISTANCE_M = 0f;
 
     private TextView nma_latitudeLabel;
     private TextView nma_longitudeLabel;
+    private TextView nma_statusLabel;
     private LocationManager nma_gpsManager;
     private ServerConnector nma_server;
 
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private void initializeViews() {
         nma_latitudeLabel = findViewById(R.id.nma_latitudeText);
         nma_longitudeLabel = findViewById(R.id.nma_longitudeText);
+        nma_statusLabel = findViewById(R.id.nma_statusText);
 
         Button nma_openMapBtn = findViewById(R.id.nma_showMapButton);
         nma_openMapBtn.setOnClickListener(v -> navigateToMap());
@@ -68,15 +70,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     // ─────────────── Permission handling ───────────────
 
     private void verifyLocationAccess() {
-        boolean nma_granted = ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
+        boolean nma_granted = hasFineLocationPermission() || hasCoarseLocationPermission();
 
         if (nma_granted) {
             beginTracking();
         } else {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[]{
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                    },
                     NMA_LOCATION_PERMISSION_CODE);
         }
     }
@@ -88,8 +91,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onRequestPermissionsResult(code, perms, outcomes);
         if (code != NMA_LOCATION_PERMISSION_CODE) return;
 
-        if (outcomes.length > 0
-                && outcomes[0] == PackageManager.PERMISSION_GRANTED) {
+        if (hasFineLocationPermission() || hasCoarseLocationPermission()) {
             beginTracking();
         } else {
             Toast.makeText(this,
@@ -102,12 +104,44 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @SuppressLint("MissingPermission")
     private void beginTracking() {
-        nma_gpsManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                NMA_MIN_INTERVAL_MS,
-                NMA_MIN_DISTANCE_M,
-                this   // Activity implements LocationListener directly
-        );
+        if (nma_gpsManager == null) return;
+
+        nma_gpsManager.removeUpdates(this);
+
+        boolean nma_isTracking = false;
+        if (hasFineLocationPermission()
+                && nma_gpsManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            nma_gpsManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    NMA_MIN_INTERVAL_MS,
+                    NMA_MIN_DISTANCE_M,
+                    this
+            );
+            nma_isTracking = true;
+        }
+
+        if ((hasFineLocationPermission() || hasCoarseLocationPermission())
+                && nma_gpsManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+            nma_gpsManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    NMA_MIN_INTERVAL_MS,
+                    NMA_MIN_DISTANCE_M,
+                    this
+            );
+            nma_isTracking = true;
+        }
+
+        Location nma_lastKnown = findLastKnownLocation();
+        if (nma_lastKnown != null) {
+            onLocationChanged(nma_lastKnown);
+        } else if (nma_isTracking) {
+            nma_statusLabel.setText("Waiting for location signal...");
+        } else {
+            nma_statusLabel.setText("Enable location services to show coordinates");
+            Toast.makeText(this,
+                    "Please enable GPS or network location",
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     // ─────────────── LocationListener callbacks ───────────────
@@ -118,6 +152,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         double nma_lng = loc.getLongitude();
 
         refreshCoordinateDisplay(nma_lat, nma_lng);
+        nma_statusLabel.setText(String.format(
+                Locale.getDefault(),
+                "Location updated via %s",
+                loc.getProvider()));
         showLocationToast(nma_lat, nma_lng, loc.getAltitude(), loc.getAccuracy());
 
         String nma_tag = DeviceUtils.resolveUniqueTag(this);
@@ -140,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         Toast.makeText(this,
                 String.format(getString(R.string.provider_enabled), provider),
                 Toast.LENGTH_SHORT).show();
+        beginTracking();
     }
 
     @Override
@@ -147,6 +186,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         Toast.makeText(this,
                 String.format(getString(R.string.provider_disabled), provider),
                 Toast.LENGTH_SHORT).show();
+        beginTracking();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (nma_gpsManager != null) {
+            nma_gpsManager.removeUpdates(this);
+        }
     }
 
     // ─────────────── UI helpers ───────────────
@@ -164,5 +212,42 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
                 String.valueOf(lat), String.valueOf(lng),
                 String.valueOf(alt), String.valueOf(acc));
         Toast.makeText(this, nma_message, Toast.LENGTH_LONG).show();
+    }
+
+    private boolean hasFineLocationPermission() {
+        return ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private boolean hasCoarseLocationPermission() {
+        return ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @SuppressLint("MissingPermission")
+    private Location findLastKnownLocation() {
+        Location nma_bestLocation = null;
+
+        if (hasFineLocationPermission()) {
+            nma_bestLocation = newerLocation(
+                    nma_bestLocation,
+                    nma_gpsManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+        }
+
+        if (hasFineLocationPermission() || hasCoarseLocationPermission()) {
+            nma_bestLocation = newerLocation(
+                    nma_bestLocation,
+                    nma_gpsManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER));
+        }
+
+        return nma_bestLocation;
+    }
+
+    private Location newerLocation(Location current, Location candidate) {
+        if (candidate == null) return current;
+        if (current == null) return candidate;
+        return candidate.getTime() > current.getTime() ? candidate : current;
     }
 }
