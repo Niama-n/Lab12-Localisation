@@ -91,6 +91,7 @@
 
     <!-- Status indicator -->
     <TextView
+        android:id="@+id/nma_statusText"
         android:text="⏳ Waiting for GPS signal…"
         android:textSize="12sp"
         android:textColor="@color/nma_subtleText"
